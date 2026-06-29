@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>勞校打字程式 · 成語檢定</title>
+    <style>
+        /* ===== 全局重置 & 字體 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif;
+            margin: 0;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #e8edf5 0%, #d0dcee 100%);
+            color: #1e2b3c;
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 32px 36px 40px;
+            border-radius: 40px;
+            box-shadow: 0 30px 80px rgba(18, 34, 58, 0.15), 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: box-shadow 0.4s ease;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 6px 0;
+            font-weight: 700;
+            font-size: 34px;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #1a2f5a, #4a7ab5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            padding-bottom: 4px;
+        }
+        h1 small {
+            font-size: 16px;
+            font-weight: 400;
+            -webkit-text-fill-color: #5a7a9a;
+            color: #5a7a9a;
+            background: none;
+            letter-spacing: 1px;
+            margin-left: 6px;
+        }
+
+        .config-section {
+            background: rgba(242, 248, 255, 0.7);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 18px 24px 22px;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 20, 40, 0.04);
+        }
+
+        .mode-selector {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 22px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #1f3a5f;
+            margin-bottom: 12px;
+        }
+        .mode-selector label {
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #2c405a;
+            padding: 4px 12px 4px 4px;
+            border-radius: 30px;
+            transition: background 0.2s;
+        }
+        .mode-selector label:hover {
+            background: rgba(44, 123, 229, 0.08);
+        }
+        .mode-selector input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2c7be5;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .student-info-form {
+            display: flex;
+            gap: 14px 24px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .student-info-form label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f3a5f;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .student-info-form input {
+            padding: 8px 14px;
+            border: 1.5px solid #d5e0ed;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #ffffff;
+            transition: border 0.25s, box-shadow 0.25s;
+            font-family: inherit;
+            width: 160px;
+        }
+        .student-info-form input:focus {
+            border-color: #2c7be5;
+            box-shadow: 0 0 0 4px rgba(44, 123, 229, 0.12);
+            outline: none;
+        }
+
+        .status-msg {
+            font-size: 14px;
+            color: #3d6b9a;
+            margin-top: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-msg .error-msg {
+            color: #d0314e;
+            font-weight: 600;
+        }
+
+        .control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px 18px;
+            margin-bottom: 18px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ripple-btn {
+            position: relative;
+            overflow: hidden;
+            transform: translate3d(0, 0, 0);
+        }
+        .ripple-btn:after {
+            content: '';
+            display: block;
+            position: absolute;
+            width: 100%;
+            padding-top: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.6s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .ripple-btn:active:after {
+            transform: translate(-50%, -50%) scale(2.5);
+            opacity: 0.6;
+            transition: 0s;
+        }
+
+        button {
+            font-size: 15px;
+            padding: 10px 26px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            letter-spacing: 0.4px;
+            background: #eef2f7;
+            color: #1e2b3c;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+        }
+        button:active:not(:disabled) {
+            transform: translateY(0px) scale(0.98);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2c7be5, #1a5fc7);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(44, 123, 229, 0.30);
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 8px 28px rgba(44, 123, 229, 0.40);
+            background: linear-gradient(135deg, #3a88f0, #1f6ad4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #1fab89, #158a6e);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(31, 171, 137, 0.30);
+        }
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 8px 28px rgba(31, 171, 137, 0.40);
+            background: linear-gradient(135deg, #26ba96, #18997a);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #d0314e, #b3203a);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(208, 49, 78, 0.30);
+        }
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 8px 28px rgba(208, 49, 78, 0.40);
+            background: linear-gradient(135deg, #dc3d5a, #c02842);
+        }
+
+        .time-setting {
+            display: flex;
+            align-items: center;
+            gap: 10px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f3a5f;
+            flex-wrap: wrap;
+        }
+        .time-setting label {
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px 4px 4px;
+            border-radius: 30px;
+            transition: background 0.2s;
+        }
+        .time-setting label:hover {
+            background: rgba(44, 123, 229, 0.08);
+        }
+        .time-setting input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #2c7be5;
+            cursor: pointer;
+        }
+
+        .timer {
+            font-size: 22px;
+            font-weight: 700;
+            background: #1a2b3e;
+            color: #f0f7ff;
+            padding: 6px 24px;
+            border-radius: 40px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background 0.4s, transform 0.2s;
+            min-width: 110px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+        .timer.warning {
+            background: #d0314e;
+            animation: pulse-timer 0.9s infinite alternate;
+        }
+        @keyframes pulse-timer {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.65; transform: scale(0.97); }
+        }
+
+        .typing-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin: 12px 0 18px;
+            position: relative;
+        }
+
+        .text-box {
+            width: 100%;
+            max-width: 560px;
+            height: 340px;
+            font-size: 24px;
+            line-height: 32px;
+            letter-spacing: 2px;
+            font-family: 'Courier New', 'MingLiU', 'SimSun', monospace;
+            box-sizing: border-box;
+            padding: 14px 20px;
+            border-radius: 20px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            transition: border-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        box-shadow 0.4s ease,
+                        background 0.4s ease;
+            scroll-behavior: smooth;
+            word-break: break-all;
+        }
+        .text-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .text-box::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .text-box::-webkit-scrollbar-thumb {
+            background: rgba(44, 123, 229, 0.25);
+            border-radius: 10px;
+        }
+        .text-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(44, 123, 229, 0.4);
+        }
+
+        .text-box.status-idle {
+            border-color: #c5d4e8;
+            background: #f0f6fc;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .text-box.status-ready {
+            border-color: #2c7be5;
+            background: #e8f0fe;
+            box-shadow: 0 0 0 4px rgba(44,123,229,0.06);
+        }
+        .text-box.status-playing {
+            border-color: #1fab89;
+            background: #f0fcf8;
+            box-shadow: 0 0 0 4px rgba(31,171,137,0.06);
+        }
+        .text-box.status-finished {
+            border-color: #d0314e;
+            background: #fef0f2;
+            box-shadow: 0 0 0 4px rgba(208,49,78,0.06);
+        }
+
+        .text-display {
+            user-select: none;
+            position: relative;
+        }
+        .text-input {
+            resize: none;
+            outline: none;
+            font-family: 'Courier New', 'MingLiU', 'SimSun', monospace;
+        }
+        .text-input:focus {
+            box-shadow: 0 0 0 4px rgba(44, 123, 229, 0.10), 0 4px 16px rgba(0, 0, 0, 0.02);
+        }
+        .text-input:disabled {
+            cursor: not-allowed;
+            opacity: 0.85;
+        }
+        .text-input.placeholder-hint::placeholder {
+            color: #a0b6d0;
+            font-weight: 400;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        .progress-wrapper {
+            width: 100%;
+            max-width: 560px;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: -4px;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2c7be5, #1fab89);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .char.pending { color: #002244; }
+        .char.correct {
+            background: #7dcea0;
+            color: #0a4b2a;
+            border-radius: 4px;
+            padding: 0 1px;
+        }
+        .char.wrong {
+            background: #f7b2a1;
+            color: #7a1f1f;
+            border-radius: 4px;
+            padding: 0 1px;
+        }
+        .char.current {
+            box-shadow: 0 0 0 2.5px #2c7be5;
+            background: #ffecb3;
+            color: #1a2b3c;
+            border-radius: 4px;
+            padding: 0 1px;
+        }
+
+        .root-lookup-box {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(251, 246, 230, 0.8);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid #e6d8ba;
+            border-radius: 40px;
+            padding: 10px 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #6a4f2a;
+            box-sizing: border-box;
+            box-shadow: inset 0 1px 6px rgba(255, 248, 220, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+        }
+        .root-lookup-box button {
+            padding: 6px 20px;
+            font-size: 14px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #2c7be5, #1a5fc7);
+            color: white;
+            box-shadow: 0 2px 10px rgba(44, 123, 229, 0.2);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .root-lookup-box button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(44, 123, 229, 0.3);
+        }
+        .root-lookup-box button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        #root-result {
+            font-weight: 500;
+            color: #3d5a7a;
+            font-size: 15px;
+        }
+
+        .results-section {
+            margin-top: 28px;
+            border-top: 2px solid rgba(0, 0, 0, 0.04);
+            padding-top: 24px;
+        }
+
+        .current-score-card {
+            background: rgba(247, 251, 255, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 16px 24px 18px;
+            border-radius: 24px;
+            margin-bottom: 28px;
+            border-left: 6px solid #1fab89;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .score-card-label {
+            font-weight: 600;
+            color: #3d5a7a;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .score-grid {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px 20px;
+            margin-top: 4px;
+        }
+        .score-item {
+            font-size: 15px;
+            font-weight: 500;
+            color: #2d4055;
+        }
+        .score-item strong {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2b3e;
+            margin-left: 2px;
+        }
+        .score-item .num-correct { color: #1fab89; }
+        .score-item .num-wrong { color: #d0314e; }
+        .score-item .num-cpm { color: #2c7be5; }
+
+        /* ----- 歷史記錄標題 + 清除按鈕 ----- */
+        .history-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px 16px;
+            margin: 8px 0 14px;
+        }
+        .history-title {
+            font-size: 19px;
+            font-weight: 600;
+            color: #1a2b3e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1 1 auto;
+        }
+        .history-title .sub {
+            font-weight: 400;
+            font-size: 14px;
+            color: #6a8aaa;
+        }
+        .btn-clear-history {
+            flex-shrink: 0;
+            font-size: 14px;
+            padding: 8px 18px;
+        }
+
+        /* ----- 歷史表格滾動容器 ----- */
+        .history-table-wrapper {
+            max-height: 320px;
+            overflow-y: auto;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+            scroll-behavior: smooth;
+        }
+        .history-table-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-table-wrapper::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+        }
+        .history-table-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(44, 123, 229, 0.25);
+            border-radius: 10px;
+        }
+        .history-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(44, 123, 229, 0.4);
+        }
+
+        .history-table-wrapper table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: transparent;
+            border-radius: 0;
+            overflow: hidden;
+            border: none;
+            box-shadow: none;
+        }
+        .history-table-wrapper thead {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .history-table-wrapper thead th {
+            background: #1a2b3e;
+            color: #f0f7ff;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+        }
+        .history-table-wrapper tbody td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .history-table-wrapper tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .history-table-wrapper tbody tr:nth-child(even) td {
+            background: rgba(44, 123, 229, 0.04);
+        }
+        .history-table-wrapper tbody tr:hover td {
+            background: rgba(44, 123, 229, 0.10);
+        }
+
+        .countdown-overlay {
+            font-size: 64px;
+            font-weight: 800;
+            color: #1a2f5a;
+            text-align: center;
+            line-height: 340px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-radius: 16px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            pointer-events: none;
+            user-select: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ===== 模態框 (清除確認) ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeInOverlay 0.25s ease;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        @keyframes fadeInOverlay {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .modal-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            max-width: 460px;
+            width: 100%;
+            padding: 32px 36px 36px;
+            border-radius: 32px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25), 0 8px 32px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            animation: slideUpModal 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center;
+        }
+        @keyframes slideUpModal {
+            0% { opacity: 0; transform: translateY(30px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-box h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2b3e;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-box h3 .icon {
+            font-size: 28px;
+        }
+        .modal-box .modal-desc {
+            font-size: 16px;
+            color: #3d5a7a;
+            line-height: 1.6;
+            margin: 4px 0 16px 0;
+        }
+        .modal-box .modal-desc strong {
+            color: #d0314e;
+        }
+        .modal-box .countdown-display {
+            display: inline-block;
+            font-size: 42px;
+            font-weight: 800;
+            color: #1a2f5a;
+            min-width: 60px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            background: rgba(44, 123, 229, 0.08);
+            padding: 0 12px;
+            border-radius: 12px;
+            margin: 0 4px;
+        }
+        .modal-box .countdown-display.warning {
+            color: #d0314e;
+            animation: pulse-countdown 0.8s infinite alternate;
+        }
+        @keyframes pulse-countdown {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(0.92); }
+        }
+
+        .modal-btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .modal-btn-group button {
+            flex: 1 1 auto;
+            min-width: 100px;
+            justify-content: center;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-btn-group .btn-cancel-modal {
+            background: #e8edf4;
+            color: #1e2b3c;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .modal-btn-group .btn-cancel-modal:hover:not(:disabled) {
+            background: #d5dce8;
+            transform: translateY(-2px);
+        }
+        .modal-btn-group .btn-confirm-clear {
+            background: linear-gradient(135deg, #d0314e, #b3203a);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(208, 49, 78, 0.30);
+        }
+        .modal-btn-group .btn-confirm-clear:hover:not(:disabled) {
+            box-shadow: 0 8px 28px rgba(208, 49, 78, 0.40);
+            background: linear-gradient(135deg, #dc3d5a, #c02842);
+        }
+        .modal-btn-group .btn-confirm-clear:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none;
+        }
+
+        /* ===== 響應式 ===== */
+        @media (max-width: 640px) {
+            .container { padding: 18px 14px 24px; border-radius: 28px; }
+            h1 { font-size: 26px; letter-spacing: 1px; }
+            h1 small { font-size: 13px; display: block; margin-top: 2px; }
+            .text-box { height: 260px; font-size: 20px; line-height: 28px; padding: 10px 14px; max-width: 100%; }
+            .control-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+            .btn-group { justify-content: center; }
+            .timer { text-align: center; font-size: 20px; padding: 6px 16px; min-width: 80px; }
+            .student-info-form input { width: 100%; min-width: 0; }
+            .mode-selector { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .time-setting { justify-content: center; }
+            .score-grid { gap: 4px 12px; }
+            .score-item { font-size: 13px; }
+            .score-item strong { font-size: 18px; }
+            .root-lookup-box { flex-direction: column; padding: 12px 16px; border-radius: 28px; }
+            .history-table-wrapper { max-height: 240px; border-radius: 16px; }
+            .history-table-wrapper th, .history-table-wrapper td { padding: 8px 10px; font-size: 13px; }
+            .history-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .btn-clear-history { align-self: flex-start; }
+            .modal-box { padding: 24px 20px 28px; border-radius: 24px; margin: 10px; }
+            .modal-box h3 { font-size: 20px; }
+            .modal-box .countdown-display { font-size: 32px; min-width: 44px; }
+            .modal-btn-group button { min-width: 80px; padding: 10px 16px; font-size: 14px; }
+        }
+        @media (max-width: 420px) {
+            .text-box { height: 210px; font-size: 17px; line-height: 24px; padding: 8px 12px; }
+            .countdown-overlay { font-size: 44px; line-height: 210px; }
+            button { font-size: 13px; padding: 8px 16px; }
+            .timer { font-size: 17px; padding: 4px 14px; min-width: 70px; }
+            .history-table-wrapper { max-height: 180px; }
+            .history-table-wrapper th, .history-table-wrapper td { padding: 6px 8px; font-size: 12px; }
+            .modal-box { padding: 18px 14px 22px; }
+            .modal-box h3 { font-size: 18px; }
+            .modal-box .countdown-display { font-size: 26px; min-width: 34px; }
+            .modal-btn-group button { min-width: 60px; padding: 8px 12px; font-size: 13px; }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn {
+            0% { opacity:0; transform:translateY(6px); }
+            100% { opacity:1; transform:translateY(0); }
+        }
+
+        .progress-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .progress-dot.idle { background: #b8cce0; }
+        .progress-dot.running { background: #1fab89; animation: pulse-dot 1.2s infinite; }
+        @keyframes pulse-dot {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:0.4; transform:scale(0.7); }
+        }
+
+        .text-input { -webkit-appearance: none; appearance: none; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="appContainer">
+    <h1>⌨️ 勞校打字程式 <small>成語 · 倉頡</small></h1>
+
+    <div class="config-section">
+        <div class="mode-selector">
+            測試模式：
+            <label><input type="radio" name="app-mode" value="practice" checked /> 練習模式</label>
+            <label><input type="radio" name="app-mode" value="test" /> 檢定測驗模式</label>
+            <span style="margin-left:auto;font-weight:400;font-size:14px;color:#6a8aaa;" id="mode-hint">🖱️ 懸停打字區看提示</span>
+        </div>
+        <div class="student-info-form" id="info-form-area" style="display:none;">
+            <label>學生編號：<input type="text" id="stu-id" placeholder="如 STU001" /></label>
+            <label>姓名：<input type="text" id="stu-name" placeholder="如 張三" /></label>
+            <label>學號／班級座號：<input type="text" id="stu-class-no" placeholder="如 3A25" /></label>
+        </div>
+        <div class="status-msg" id="status-msg">
+            <span class="progress-dot idle" id="statusDot"></span>
+            <span id="statusText">⏳ 正在載入成語庫…</span>
+        </div>
+    </div>
+
+    <div class="control-bar">
+        <div class="btn-group">
+            <button id="btn-start" class="btn-success ripple-btn" disabled>📂 載入題目並開始</button>
+            <button id="btn-stop" class="btn-danger ripple-btn" disabled>⏹ 提前結束並提交</button>
+        </div>
+        <div class="time-setting">
+            ⏱ 時間限制：
+            <label><input type="radio" name="time-limit" value="5" checked /> 5 分鐘</label>
+            <label><input type="radio" name="time-limit" value="10" /> 10 分鐘</label>
+        </div>
+        <div class="timer" id="timer-display">⏱ 05:00</div>
+    </div>
+
+    <div class="typing-wrapper" id="typingWrapper">
+        <div class="text-box text-display status-idle" id="source-text">請等待成語庫載入完成…</div>
+        <textarea class="text-box text-input status-idle placeholder-hint" id="user-input" placeholder="系統就緒後在此處輸入…" onpaste="return false;" ondrop="return false;" autocomplete="off" spellcheck="false" disabled></textarea>
+        <div class="progress-wrapper">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="root-lookup-box" id="root-box" style="display:block;">
+            <button id="btn-lookup" class="btn-primary ripple-btn">🔍 查看當前字根</button>
+            <span id="root-result">點擊按鈕查詢下一個字的倉頡碼</span>
+        </div>
+    </div>
+
+    <div class="results-section">
+        <div class="current-score-card">
+            <div class="score-card-label">📊 本次提交成績</div>
+            <div class="score-grid">
+                <div class="score-item">總完成字數：<strong id="res-total">0</strong></div>
+                <div class="score-item">正確字數：<strong class="num-correct" id="res-correct">0</strong></div>
+                <div class="score-item">錯誤字數：<strong class="num-wrong" id="res-wrong">0</strong></div>
+                <div class="score-item">正確率：<strong id="res-accuracy">0%</strong></div>
+                <div class="score-item">速度 (字/分)：<strong class="num-cpm" id="res-cpm">0.00</strong></div>
+            </div>
+        </div>
+
+        <div class="history-header">
+            <div class="history-title">
+                📋 歷史登錄紀錄
+                <span class="sub">（自動儲存於本機）</span>
+            </div>
+            <button id="btn-clear-history" class="btn-danger ripple-btn btn-clear-history">🗑️ 清除所有記錄</button>
+        </div>
+
+        <div class="history-table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>時間</th><th>模式</th><th>學生資訊</th><th>總輸入</th><th>正確字數</th><th>速度 (CPM)</th><th>正確率</th></tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <tr><td colspan="7" style="text-align:center;color:#a0b6d0;">目前尚無應檢紀錄</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 清除確認模態框 ===== -->
+<div class="modal-overlay" id="clearModal">
+    <div class="modal-box">
+        <h3><span class="icon">⚠️</span> 清除歷史記錄</h3>
+        <div class="modal-desc" id="modalDesc">
+            需要 <strong>老師確認</strong> 後才可清除，請等待
+            <span class="countdown-display warning" id="modalCountdown">5</span> 秒…
+        </div>
+        <div class="modal-btn-group">
+            <button class="btn-cancel-modal" id="modalCancelBtn">取消</button>
+            <button class="btn-confirm-clear" id="modalConfirmBtn" disabled>確認清除</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // ---- 常數 ----
+        const MAX_CHARS = 1000;
+        const STORAGE_KEY = 'typingHistory';
+
+        // ---- 狀態 ----
+        let targetText = '';
+        let currentMode = 'practice';
+        let isPlaying = false;
+        let isDirty = false;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let timeLimitSeconds = 300;
+        let countdownInterval = null;
+        let historyLog = [];
+        let idiomList = [];
+        let charSpans = [];
+
+        // ---- DOM ----
+        const radioModes = document.getElementsByName('app-mode');
+        const infoFormArea = document.getElementById('info-form-area');
+        const btnStart = document.getElementById('btn-start');
+        const btnStop = document.getElementById('btn-stop');
+        const timerDisplay = document.getElementById('timer-display');
+        const sourceTextDiv = document.getElementById('source-text');
+        const inputArea = document.getElementById('user-input');
+        const rootBox = document.getElementById('root-box');
+        const btnLookup = document.getElementById('btn-lookup');
+        const rootResultSpan = document.getElementById('root-result');
+        const resTotal = document.getElementById('res-total');
+        const resCorrect = document.getElementById('res-correct');
+        const resWrong = document.getElementById('res-wrong');
+        const resAccuracy = document.getElementById('res-accuracy');
+        const resCpm = document.getElementById('res-cpm');
+        const historyTbody = document.getElementById('history-tbody');
+        const statusText = document.getElementById('statusText');
+        const statusDot = document.getElementById('statusDot');
+        const modeHint = document.getElementById('mode-hint');
+        const timeRadios = document.getElementsByName('time-limit');
+        const progressBar = document.getElementById('progressBar');
+
+        // ---- 清除模態框 DOM ----
+        const clearModal = document.getElementById('clearModal');
+        const modalCountdown = document.getElementById('modalCountdown');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const btnClearHistory = document.getElementById('btn-clear-history');
+
+        // ---- 工具 ----
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function setStatus(text, isError = false, isRunning = false) {
+            statusText.textContent = text;
+            statusText.style.color = isError ? '#d0314e' : '#3d6b9a';
+            statusDot.className = isRunning ? 'progress-dot running' : 'progress-dot idle';
+        }
+
+        function setBoxStatus(status) {
+            const valid = ['idle', 'ready', 'playing', 'finished'];
+            if (!valid.includes(status)) status = 'idle';
+            const classes = ['status-idle', 'status-ready', 'status-playing', 'status-finished'];
+            sourceTextDiv.classList.remove(...classes);
+            inputArea.classList.remove(...classes);
+            sourceTextDiv.classList.add('status-' + status);
+            inputArea.classList.add('status-' + status);
+        }
+
+        function updateProgress(inputLen) {
+            const percent = Math.min(100, (inputLen / MAX_CHARS) * 100);
+            progressBar.style.width = percent + '%';
+        }
+
+        function saveHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(historyLog));
+            } catch (e) { /* ignore */ }
+        }
+
+        function loadHistory() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        historyLog = parsed;
+                        renderHistory();
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // ---- 載入成語庫（自動辨識純字串陣列或物件陣列） ----
+        async function loadIdioms() {
+            try {
+                const url = './idioms.json';
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                let data = await resp.json();
+
+                if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+                    if (data.data && Array.isArray(data.data)) {
+                        data = data.data;
+                    } else if (data.results && Array.isArray(data.results)) {
+                        data = data.results;
+                    } else if (data.records && Array.isArray(data.records)) {
+                        data = data.records;
+                    } else {
+                        const keys = Object.keys(data);
+                        for (let key of keys) {
+                            if (Array.isArray(data[key])) {
+                                data = data[key];
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error('資料不是陣列或為空');
+                }
+
+                let words = [];
+                if (typeof data[0] === 'string') {
+                    words = data;
+                } else if (typeof data[0] === 'object' && data[0] !== null) {
+                    const keys = ['成語', 'word', 'title'];
+                    let key = keys.find(k => data[0].hasOwnProperty(k));
+                    if (key) {
+                        words = data.map(item => item[key]).filter(Boolean);
+                    } else {
+                        throw new Error('找不到成語欄位');
+                    }
+                } else {
+                    throw new Error('不支援的資料格式');
+                }
+
+                if (words.length === 0) throw new Error('未提取到任何成語');
+
+                let unique = [...new Set(words)];
+                idiomList = unique.slice(0, 5489);
+
+                setStatus(`✅ 成功載入 ${idiomList.length} 個成語`);
+                btnStart.disabled = false;
+                sourceTextDiv.innerText = '請點擊「載入題目並開始」';
+                setBoxStatus('ready');
+                inputArea.placeholder = '系統就緒，點擊上方按鈕開始…';
+                return true;
+            } catch (err) {
+                setStatus(`❌ 載入成語庫失敗：${err.message}，請確認檔案格式`, true);
+                btnStart.disabled = true;
+                sourceTextDiv.innerText = '⚠️ 無法載入成語庫，請檢查 idioms.json 格式';
+                setBoxStatus('idle');
+                return false;
+            }
+        }
+
+        // ---- 生成練習文字 ----
+        function generatePhraseText() {
+            if (idiomList.length === 0) return '';
+            const shuffled = shuffleArray([...idiomList]);
+            let result = '';
+            for (const idiom of shuffled) {
+                result += idiom;
+                if (result.length >= MAX_CHARS) break;
+            }
+            while (result.length < MAX_CHARS) {
+                result += '※';
+            }
+            return result.substring(0, MAX_CHARS);
+        }
+
+        // ---- 建立字元 spans ----
+        function buildCharSpans(text) {
+            sourceTextDiv.innerHTML = '';
+            charSpans = [];
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < text.length; i++) {
+                const span = document.createElement('span');
+                span.className = 'char pending';
+                span.textContent = text[i];
+                span.dataset.index = i;
+                fragment.appendChild(span);
+                charSpans.push(span);
+            }
+            sourceTextDiv.appendChild(fragment);
+        }
+
+        // ---- 更新高亮 + 自動滾動 + 進度 ----
+        function updateHighlight(userInput) {
+            const len = Math.min(userInput.length, targetText.length);
+            for (let i = 0; i < charSpans.length; i++) {
+                charSpans[i].className = 'char pending';
+            }
+            for (let i = 0; i < len; i++) {
+                const cls = (userInput[i] === targetText[i]) ? 'char correct' : 'char wrong';
+                charSpans[i].className = cls;
+            }
+            if (userInput.length < targetText.length) {
+                const cur = charSpans[userInput.length];
+                if (cur) cur.classList.add('current');
+                const container = sourceTextDiv;
+                const containerRect = container.getBoundingClientRect();
+                const spanRect = cur ? cur.getBoundingClientRect() : null;
+                if (spanRect && (spanRect.top < containerRect.top || spanRect.bottom > containerRect.bottom)) {
+                    const scrollOffset = spanRect.top - containerRect.top - (containerRect.height / 2) + (spanRect.height / 2);
+                    container.scrollTop += scrollOffset;
+                }
+            }
+            updateProgress(userInput.length);
+        }
+
+        function updateRootHint(rawText) {
+            const idx = rawText.length;
+            if (idx < targetText.length) {
+                rootResultSpan.innerText = `下一個字：「${targetText[idx]}」，點擊按鈕查詢字根`;
+            } else if (idx >= targetText.length && isPlaying) {
+                rootResultSpan.innerText = '🎉 已完成所有字數輸入！';
+            } else {
+                rootResultSpan.innerText = '點擊按鈕查詢下一個字的倉頡碼';
+            }
+        }
+
+        // ---- 結束測驗 ----
+        function finishTest(reason) {
+            if (!isPlaying) return;
+            isPlaying = false;
+            isDirty = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            inputArea.disabled = true;
+            btnStop.disabled = true;
+            for (let radio of timeRadios) radio.disabled = false;
+            setBoxStatus('finished');
+
+            const userRaw = inputArea.value.replace(/\n/g, '');
+            const len = Math.min(userRaw.length, targetText.length);
+            let correct = 0, wrong = 0;
+            for (let i = 0; i < len; i++) {
+                if (userRaw[i] === targetText[i]) correct++;
+                else wrong++;
+            }
+            if (userRaw.length > targetText.length) {
+                wrong += (userRaw.length - targetText.length);
+            }
+            const total = userRaw.length;
+            const accuracy = total > 0 ? ((correct / total) * 100) : 0;
+            const timeUsed = Math.max(1, secondsElapsed);
+            const cpm = correct / (timeUsed / 60);
+
+            resTotal.innerText = total;
+            resCorrect.innerText = correct;
+            resWrong.innerText = wrong;
+            resAccuracy.innerText = accuracy.toFixed(1) + '%';
+            resCpm.innerText = cpm.toFixed(2);
+
+            let studentDisplay = '無（練習模式）';
+            if (currentMode === 'test') {
+                const id = document.getElementById('stu-id').value;
+                const name = document.getElementById('stu-name').value;
+                const classNo = document.getElementById('stu-class-no').value;
+                studentDisplay = `[${id}] ${name} (${classNo})`;
+            }
+            historyLog.push({
+                time: new Date().toLocaleTimeString(),
+                mode: (currentMode === 'test' ? '🏆 檢定' : '📝 練習') + ' (成語)',
+                student: studentDisplay,
+                total: total,
+                correct: correct,
+                cpm: cpm.toFixed(2),
+                accuracy: accuracy.toFixed(1) + '%'
+            });
+            renderHistory();
+            saveHistory();
+
+            updateHighlight(userRaw);
+            resetUI();
+            setStatus(`✅ 測驗結束 (${reason})`);
+        }
+
+        // ---- 渲染歷史 ----
+        function renderHistory() {
+            let html = '';
+            if (historyLog.length === 0) {
+                html = `<tr><td colspan="7" style="text-align:center;color:#a0b6d0;">目前尚無應檢紀錄</td></tr>`;
+            } else {
+                for (let i = historyLog.length - 1; i >= 0; i--) {
+                    const item = historyLog[i];
+                    html += `<tr>
+                        <td>${item.time}</td>
+                        <td>${item.mode}</td>
+                        <td>${item.student}</td>
+                        <td>${item.total} 字</td>
+                        <td style="color:#1fab89;font-weight:700;">${item.correct}</td>
+                        <td style="color:#2c7be5;font-weight:700;">${item.cpm}</td>
+                        <td>${item.accuracy}</td>
+                    </tr>`;
+                }
+            }
+            historyTbody.innerHTML = html;
+        }
+
+        // ---- 重置 UI ----
+        function resetUI() {
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            radioModes.forEach(r => r.disabled = false);
+            document.getElementById('stu-id').disabled = false;
+            document.getElementById('stu-name').disabled = false;
+            document.getElementById('stu-class-no').disabled = false;
+            for (let radio of timeRadios) radio.disabled = false;
+            updateTimerDisplay();
+            timerDisplay.classList.remove('warning');
+            if (currentMode === 'practice') {
+                rootBox.style.display = 'block';
+            } else {
+                rootBox.style.display = 'none';
+            }
+            inputArea.disabled = true;
+            inputArea.value = '';
+            inputArea.placeholder = '測驗已結束，點擊「載入題目並開始」重新開始';
+        }
+
+        // ---- 更新計時器 ----
+        function updateTimerDisplay() {
+            let mins = 5;
+            for (let radio of timeRadios) {
+                if (radio.checked) { mins = parseInt(radio.value); break; }
+            }
+            timeLimitSeconds = mins * 60;
+            const m = String(Math.floor(timeLimitSeconds / 60)).padStart(2, '0');
+            const s = String(timeLimitSeconds % 60).padStart(2, '0');
+            timerDisplay.innerText = `⏱ ${m}:${s}`;
+        }
+
+        for (let radio of timeRadios) {
+            radio.addEventListener('change', updateTimerDisplay);
+        }
+
+        // ---- 倒數計時 ----
+        function startCountdown(callback) {
+            let count = 5;
+            const overlay = document.createElement('div');
+            overlay.className = 'countdown-overlay';
+            overlay.id = 'countdown-overlay';
+            overlay.textContent = count;
+            sourceTextDiv.style.position = 'relative';
+            sourceTextDiv.appendChild(overlay);
+
+            btnStart.disabled = true;
+            btnStop.disabled = true;
+            inputArea.disabled = true;
+            setBoxStatus('idle');
+
+            countdownInterval = setInterval(() => {
+                count--;
+                if (count <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    const ov = document.getElementById('countdown-overlay');
+                    if (ov) ov.remove();
+                    sourceTextDiv.style.position = '';
+                    callback();
+                } else {
+                    const ov = document.getElementById('countdown-overlay');
+                    if (ov) ov.textContent = count;
+                }
+            }, 1000);
+        }
+
+        // ---- 實際開始 ----
+        function beginTest() {
+            sourceTextDiv.innerHTML = '';
+            buildCharSpans(targetText);
+            updateHighlight('');
+            setBoxStatus('playing');
+
+            secondsElapsed = 0;
+            const m = String(Math.floor(timeLimitSeconds / 60)).padStart(2, '0');
+            const s = String(timeLimitSeconds % 60).padStart(2, '0');
+            timerDisplay.innerText = `⏱ ${m}:${s}`;
+            isPlaying = true;
+            isDirty = true;
+            inputArea.disabled = false;
+            inputArea.value = '';
+            inputArea.placeholder = '請在此輸入…';
+            inputArea.focus();
+            btnStop.disabled = false;
+            btnStart.disabled = true;
+
+            for (let radio of timeRadios) radio.disabled = true;
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const remain = Math.max(0, timeLimitSeconds - secondsElapsed);
+                const rm = String(Math.floor(remain / 60)).padStart(2, '0');
+                const rs = String(remain % 60).padStart(2, '0');
+                timerDisplay.innerText = `⏱ ${rm}:${rs}`;
+                if (remain <= 30) timerDisplay.classList.add('warning');
+                else timerDisplay.classList.remove('warning');
+                if (remain <= 0) finishTest('時間到！');
+            }, 1000);
+
+            setStatus(`📖 測驗進行中 (${timeLimitSeconds/60} 分鐘)`, false, true);
+            if (currentMode === 'practice') {
+                rootBox.style.display = 'block';
+                updateRootHint('');
+            } else {
+                rootBox.style.display = 'none';
+            }
+        }
+
+        // ---- 模式切換 ----
+        radioModes.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (isPlaying) {
+                    alert('測驗進行中，無法切換模式！');
+                    e.target.checked = (currentMode === 'practice');
+                    return;
+                }
+                currentMode = e.target.value;
+                if (currentMode === 'test') {
+                    infoFormArea.style.display = 'flex';
+                    rootBox.style.display = 'none';
+                    modeHint.textContent = '📋 請填寫學生資訊';
+                } else {
+                    infoFormArea.style.display = 'none';
+                    rootBox.style.display = 'block';
+                    modeHint.textContent = '🖱️ 懸停打字區看提示';
+                }
+                if (!isPlaying && !btnStart.disabled) {
+                    setBoxStatus('ready');
+                }
+            });
+        });
+
+        // ---- 防作弊 ----
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
+                (e.ctrlKey && (e.key === 'u' || e.key === 'U')) ||
+                (e.ctrlKey && (e.key === 'c' || e.key === 'C')) ||
+                (e.ctrlKey && (e.key === 'v' || e.key === 'V'))) {
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (isDirty) {
+                const message = '您有未完成的測驗或未提交的成績，確定要離開嗎？';
+                e.preventDefault();
+                e.returnValue = message;
+                return message;
+            }
+        });
+
+        // ---- 開始按鈕 ----
+        btnStart.addEventListener('click', async () => {
+            if (currentMode === 'test') {
+                const id = document.getElementById('stu-id').value.trim();
+                const name = document.getElementById('stu-name').value.trim();
+                const classNo = document.getElementById('stu-class-no').value.trim();
+                if (!id || !name || !classNo) {
+                    alert('【系統提示】測驗模式下，學生編號、姓名、學號皆為必填項目！');
+                    return;
+                }
+                document.getElementById('stu-id').disabled = true;
+                document.getElementById('stu-name').disabled = true;
+                document.getElementById('stu-class-no').disabled = true;
+            }
+
+            let mins = 5;
+            for (let radio of timeRadios) {
+                if (radio.checked) { mins = parseInt(radio.value); break; }
+            }
+            timeLimitSeconds = mins * 60;
+
+            radioModes.forEach(r => r.disabled = true);
+            btnStart.disabled = true;
+            btnStop.disabled = true;
+            inputArea.disabled = true;
+
+            if (idiomList.length === 0) {
+                alert('成語庫尚未載入，請重新整理頁面。');
+                resetUI();
+                return;
+            }
+
+            try {
+                const rawText = generatePhraseText();
+                targetText = rawText.substring(0, MAX_CHARS);
+                while (targetText.length < MAX_CHARS) targetText += '※';
+
+                sourceTextDiv.innerText = '載入完成，準備倒數…';
+                setBoxStatus('idle');
+                startCountdown(() => {
+                    beginTest();
+                });
+            } catch (err) {
+                alert('生成題目失敗，請重新整理');
+                resetUI();
+            }
+        });
+
+        // ================================================================
+        //  ★★★  修正：輸入法組合輸入（拼音／注音／倉頡）支援  ★★★
+        // ================================================================
+        let isComposing = false;
+        let lastProcessedValue = '';
+
+        inputArea.addEventListener('compositionstart', function() {
+            isComposing = true;
+        });
+
+        inputArea.addEventListener('compositionend', function() {
+            isComposing = false;
+            setTimeout(processInput, 10);
+        });
+
+        inputArea.addEventListener('input', function(e) {
+            if (isComposing) return;
+            processInput();
+        });
+
+        function processInput() {
+            if (!isPlaying) return;
+            const rawText = inputArea.value.replace(/\n/g, '');
+            if (rawText === lastProcessedValue) return;
+            lastProcessedValue = rawText;
+
+            if (rawText.length > MAX_CHARS) {
+                const truncated = rawText.substring(0, MAX_CHARS);
+                inputArea.value = truncated;
+                lastProcessedValue = truncated;
+                updateHighlight(truncated);
+                if (currentMode === 'practice') updateRootHint(truncated);
+                if (truncated.length === MAX_CHARS) {
+                    finishTest('🎉 完成全部字數！');
+                }
+                return;
+            }
+
+            updateHighlight(rawText);
+            if (currentMode === 'practice') updateRootHint(rawText);
+            if (rawText.length === MAX_CHARS) {
+                finishTest('🎉 完成全部字數！');
+            }
+        }
+
+        // ---- 字根查詢（透過後端 API） ----
+        // 移除了硬編碼的 cangjieDict，改為呼叫 Flask 服務
+        btnLookup.addEventListener('click', async () => {
+            const rawText = inputArea.value.replace(/\n/g, '');
+            const currentIdx = rawText.length;
+            if (currentIdx >= targetText.length) {
+                rootResultSpan.innerText = '所有字已完成，無需查詢';
+                return;
+            }
+            const nextChar = targetText[currentIdx];
+            rootResultSpan.innerText = '⏳ 查詢中…';
+            btnLookup.disabled = true;
+
+            try {
+                const response = await fetch(`http://localhost:5000/cangjie?char=${encodeURIComponent(nextChar)}`);
+                const data = await response.json();
+                if (data.error) {
+                    rootResultSpan.innerText = `❌ ${data.error}`;
+                } else {
+                    const code = data.code || '未收錄';
+                    rootResultSpan.innerText = `當前字「${nextChar}」的字根為：【${code}】`;
+                }
+            } catch (err) {
+                rootResultSpan.innerText = `⚠️ 無法連線至後端服務，請確認 app.py 是否執行中。`;
+                console.error(err);
+            } finally {
+                btnLookup.disabled = false;
+            }
+        });
+
+        // ---- 提前結束 ----
+        btnStop.addEventListener('click', () => {
+            if (confirm('確定要提交目前的打字成績並結束檢定嗎？')) {
+                finishTest('提前結束');
+            }
+        });
+
+        // ============================================================
+        // ===== 清除歷史記錄（含 5 秒等待 + 確認） =====
+        // ============================================================
+        let clearCountdownTimer = null;
+        let clearCountdownValue = 5;
+
+        function openClearModal() {
+            if (historyLog.length === 0) {
+                alert('📭 目前沒有歷史記錄可清除。');
+                return;
+            }
+            clearCountdownValue = 5;
+            modalCountdown.textContent = clearCountdownValue;
+            modalCountdown.className = 'countdown-display warning';
+            modalConfirmBtn.disabled = true;
+            modalConfirmBtn.textContent = '確認清除';
+            modalDesc.innerHTML =
+                `需要 <strong>老師確認</strong> 後才可清除，請等待 <span class="countdown-display warning" id="modalCountdown">5</span> 秒…`;
+            clearModal.classList.add('active');
+
+            if (clearCountdownTimer) clearInterval(clearCountdownTimer);
+            clearCountdownTimer = setInterval(() => {
+                clearCountdownValue--;
+                const cd = document.getElementById('modalCountdown');
+                if (cd) {
+                    cd.textContent = clearCountdownValue;
+                    cd.className = clearCountdownValue <= 2 ? 'countdown-display warning' : 'countdown-display';
+                }
+                if (clearCountdownValue <= 0) {
+                    clearInterval(clearCountdownTimer);
+                    clearCountdownTimer = null;
+                    modalConfirmBtn.disabled = false;
+                    modalConfirmBtn.textContent = '✅ 確認清除';
+                    const cd2 = document.getElementById('modalCountdown');
+                    if (cd2) {
+                        cd2.textContent = '0';
+                        cd2.className = 'countdown-display';
+                    }
+                    modalDesc.innerHTML = `⏳ 等待完畢，請點擊 <strong>「確認清除」</strong> 以永久刪除所有歷史記錄。`;
+                }
+            }, 1000);
+        }
+
+        function closeClearModal() {
+            clearModal.classList.remove('active');
+            if (clearCountdownTimer) {
+                clearInterval(clearCountdownTimer);
+                clearCountdownTimer = null;
+            }
+            clearCountdownValue = 5;
+            modalCountdown.textContent = '5';
+            modalCountdown.className = 'countdown-display warning';
+            modalConfirmBtn.disabled = true;
+            modalConfirmBtn.textContent = '確認清除';
+            modalDesc.innerHTML =
+                `需要 <strong>老師確認</strong> 後才可清除，請等待 <span class="countdown-display warning" id="modalCountdown">5</span> 秒…`;
+        }
+
+        btnClearHistory.addEventListener('click', openClearModal);
+        modalCancelBtn.addEventListener('click', closeClearModal);
+        clearModal.addEventListener('click', function(e) {
+            if (e.target === this) { /* 點擊背景不關閉 */ }
+        });
+
+        modalConfirmBtn.addEventListener('click', function() {
+            if (this.disabled) return;
+            if (historyLog.length === 0) {
+                closeClearModal();
+                alert('📭 目前沒有歷史記錄可清除。');
+                return;
+            }
+            if (!confirm('⚠️ 確定要永久清除所有歷史記錄嗎？此操作無法復原！')) return;
+            historyLog = [];
+            renderHistory();
+            saveHistory();
+            closeClearModal();
+            setStatus('🗑️ 所有歷史記錄已清除', false, false);
+            const origText = statusText.textContent;
+            statusText.textContent = '✅ 歷史記錄已成功清除！';
+            setTimeout(() => {
+                statusText.textContent = origText || '🗑️ 所有歷史記錄已清除';
+            }, 2000);
+        });
+
+        // ---- 初始化 ----
+        infoFormArea.style.display = 'none';
+        rootBox.style.display = 'block';
+        document.querySelector('input[name="time-limit"][value="5"]').checked = true;
+        updateTimerDisplay();
+        setBoxStatus('idle');
+        updateProgress(0);
+
+        loadHistory();
+        loadIdioms().then(success => {
+            if (success) setBoxStatus('ready');
+        });
+
+        console.log('🔤 勞校打字程式 (完整整合版) 已啟動');
+    })();
+</script>
+</body>
+</html>
